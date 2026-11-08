@@ -9,6 +9,7 @@ const GEO_URL = "https://geocoding-api.open-meteo.com/v1/search";
 const FORECAST_URL = "https://api.open-meteo.com/v1/forecast";
 const REVERSE_URL = "https://api.bigdatacloud.net/data/reverse-geocode-client";
 const STORAGE_KEY = "skycast.v1";
+const SESSION_KEY = "skycast.session.v1";
 
 const DEFAULT_PLACE = {
   name: "Islamabad",
@@ -174,10 +175,36 @@ function saveStore(patch) {
 
 const store = loadStore();
 
+/* Place history (recents + last place) is session-only: it lives in sessionStorage
+   and never outlives the tab. Drop any copy an older version left in localStorage. */
+function loadSession() {
+  try {
+    return JSON.parse(sessionStorage.getItem(SESSION_KEY)) || {};
+  } catch {
+    return {};
+  }
+}
+function saveSession(patch) {
+  try {
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify({ ...loadSession(), ...patch }));
+  } catch {
+    /* storage unavailable (private mode) — app still works */
+  }
+}
+
+const session = loadSession();
+if (store.recents || store.last) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ unit: store.unit }));
+  } catch {
+    /* ignore */
+  }
+}
+
 const state = {
   unit: store.unit === "f" ? "f" : "c",
-  recents: Array.isArray(store.recents) ? store.recents : [],
-  last: store.last && typeof store.last.latitude === "number" ? store.last : null,
+  recents: Array.isArray(session.recents) ? session.recents : [],
+  last: session.last && typeof session.last.latitude === "number" ? session.last : null,
   suggestions: [],
   activeIndex: -1,
 };
@@ -262,7 +289,7 @@ function saveRecent(place) {
       (r) => !(r.name === entry.name && Math.abs(r.latitude - entry.latitude) < 0.01)
     ),
   ].slice(0, 5);
-  saveStore({ recents: state.recents });
+  saveSession({ recents: state.recents });
   renderRecents();
 }
 
@@ -433,7 +460,7 @@ async function loadWeather(place) {
     latitude: place.latitude,
     longitude: place.longitude,
   };
-  saveStore({ last: state.last });
+  saveSession({ last: state.last });
 
   const unitParam = state.unit === "f" ? "&temperature_unit=fahrenheit" : "";
   const url =

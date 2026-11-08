@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://api.open-meteo.com https://geocoding-api.open-meteo.com https://api.bigdatacloud.net; font-src 'self' data:; media-src 'self'; form-action 'self'; base-uri 'none'; object-src 'none'" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Skycast — Weather Forecast</title>
   <meta name="description" content="Skycast is a fast, responsive weather app with city search, hourly and 7-day forecasts. Built with vanilla JavaScript and the free Open-Meteo API — no API key needed." />
@@ -52,6 +53,7 @@
     </form>
 
     <div id="recents" class="recents" aria-label="Recent searches" hidden></div>
+    <p class="privacy-note">Recent places stay in this tab only; your precise location is used only to look up the forecast.</p>
 
     <div id="status" class="status" role="status" aria-live="polite" hidden></div>
 
